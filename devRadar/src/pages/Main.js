@@ -5,6 +5,7 @@ import Geolocation from '@react-native-community/geolocation';
 
 import search from '../assets/search.png';
 import api from '../services/api';
+import {connect, disconnect, subscribeToNewDevs} from '../services/socket';
 
 function Main({navigation}){
 
@@ -26,8 +27,23 @@ function Main({navigation}){
         loadInitialPosition();
     }, []);
 
+    useEffect(() => {
+        subscribeToNewDevs(dev => setDevs([...devs, dev]));
+    }, [devs]);
+
     if(!location){
         return null;
+    }
+
+    function setupWebSocket(){
+        disconnect();
+
+        const {latitude, longitude} = location;
+        connect(
+            latitude,
+            longitude,
+            techs
+        );
     }
 
     async function loadDevs(){
@@ -41,6 +57,7 @@ function Main({navigation}){
             }
         });
         setDevs(response.data.devs);
+        setupWebSocket();
     }
 
     function handleRegionChanged(region){
